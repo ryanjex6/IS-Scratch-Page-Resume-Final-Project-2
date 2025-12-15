@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic-Tac-Toe</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 2rem;
+    transition: background 0.5s;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  h1 {
+    color: #ffffff;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 5px;
+    margin-bottom: 1rem;
+  }
+
+  .cell {
+    background-color: #ffffff;
+    border: 2px solid #002E5D;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s, background 0.2s, color 0.5s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border-radius: 8px;
+  }
+
+  .cell:hover { transform: scale(1.05); background-color: #eef6fc; }
+  .cell.winner { background-color: #FFD700; color: #002E5D; font-weight: bold; }
+
+  button {
+    margin-top: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #002E5D;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    font-weight: bold;
+  }
+
+  button:hover { background-color: #B7C9E2; transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+
+  .message {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    color: #ffffff;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+    min-height: 1.5em;
+    transition: opacity 0.3s;
+  }
+
+  .mode-container { margin-bottom: 1rem; display:flex; gap: 1rem; flex-wrap:wrap; justify-content:center;}
+
+  /* Snowflake effect for Christmas theme */
+  .snowflake {
+    position: absolute;
+    top: -10px;
+    color: #ffffff;
+    font-size: 1.2rem;
+    user-select: none;
+    pointer-events: none;
+    animation: fall linear infinite;
+  }
+
+  @keyframes fall {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(110vh) rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<h1>Tic-Tac-Toe</h1>
+
+<div class="mode-container">
+  <button id="toggleModeBtn">Mode: Human vs Human</button>
+  <button id="themeBtn">Theme: Normal</button>
+</div>
+
+<div class="board">
+  <div class="cell" data-index="0"></div>
+  <div class="cell" data-index="1"></div>
+  <div class="cell" data-index="2"></div>
+  <div class="cell" data-index="3"></div>
+  <div class="cell" data-index="4"></div>
+  <div class="cell" data-index="5"></div>
+  <div class="cell" data-index="6"></div>
+  <div class="cell" data-index="7"></div>
+  <div class="cell" data-index="8"></div>
+</div>
+
+<button id="resetBtn">Reset Game</button>
+<div class="message" id="message"></div>
+
+<script>
+const board = document.querySelectorAll('.cell');
+const message = document.getElementById('message');
+const resetBtn = document.getElementById('resetBtn');
+const toggleModeBtn = document.getElementById('toggleModeBtn');
+const themeBtn = document.getElementById('themeBtn');
+let turn = 'X';
+let moves = Array(9).fill(null);
+let vsAI = false;
+let theme = 'normal';
+let snowflakes = [];
+
+const winCombos = [
+  [0,1,2],[3,4,5],[6,7,8],
+  [0,3,6],[1,4,7],[2,5,8],
+  [0,4,8],[2,4,6]
+];
+
+function setTheme() {
+  // Remove existing snowflakes
+  snowflakes.forEach(s => s.remove());
+  snowflakes = [];
+
+  if(theme==='normal'){
+    document.body.style.background='linear-gradient(135deg, #002E5D, #B7C9E2)';
+    themeBtn.textContent='Theme: Normal';
+    board.forEach(cell => cell.style.color='inherit');
+  } else if(theme==='christmas'){
+    document.body.style.background='linear-gradient(135deg, #8B0000, #006400)';
+    themeBtn.textContent='Theme: Christmas';
+    createSnowflakes(30);
+  } else if(theme==='colorful'){
+    document.body.style.background='linear-gradient(135deg, #FF6F61, #FFD93D)';
+    themeBtn.textContent='Theme: Colorful';
+  }
+  resetGame();
+}
+
+// Snowflake creation
+function createSnowflakes(count){
+  for(let i=0;i<count;i++){
+    const flake=document.createElement('div');
+    flake.className='snowflake';
+    flake.textContent='❄';
+    flake.style.left=Math.random()*100+'vw';
+    flake.style.fontSize=(10+Math.random()*20)+'px';
+    flake.style.animationDuration=(3+Math.random()*5)+'s';
+    document.body.appendChild(flake);
+    snowflakes.push(flake);
+  }
+}
+
+function applyThemeSymbol(symbol){
+  if(theme==='christmas'){
+    return symbol==='X'?'🎄':'❄️';
+  } else if(theme==='colorful'){
+    // Return the symbol with dynamic random color
+    const colors=['#FF5733','#33FF57','#3357FF','#F0E68C','#FF33A1'];
+    const color=colors[Math.floor(Math.random()*colors.length)];
+    return `<span style="color:${color}">${symbol}</span>`;
+  }
+  return symbol;
+}
+
+function checkWinner(){
+  for(let combo of winCombos){
+    const [a,b,c]=combo;
+    if(moves[a] && moves[a]===moves[b] && moves[a]===moves[c]){
+      combo.forEach(i=>board[i].classList.add('winner'));
+      message.innerHTML=`${theme==='christmas'? (moves[a]==='X'?'🎄':'❄️'):moves[a]} wins!`;
+      return true;
+    }
+  }
+  if(moves.every(cell=>cell)){
+    message.textContent="It's a tie!";
+    return true;
+  }
+  return false;
+}
+
+function aiMove(){
+  const empty = moves.map((val,i)=>val?null:i).filter(v=>v!==null);
+
+  // Win
+  for(let combo of winCombos){
+    const [a,b,c]=combo; const line=[moves[a],moves[b],moves[c]];
+    if(line.filter(v=>'O'===v).length===2 && line.includes(null)){
+      const idx=[a,b,c].find(i=>!moves[i]); moves[idx]='O'; board[idx].innerHTML=applyThemeSymbol('O');
+      checkWinner(); turn='X'; message.innerHTML=`Next turn: ${applyThemeSymbol(turn)}`; return;
+    }
+  }
+  // Block
+  for(let combo of winCombos){
+    const [a,b,c]=combo; const line=[moves[a],moves[b],moves[c]];
+    if(line.filter(v=>'X'===v).length===2 && line.includes(null)){
+      const idx=[a,b,c].find(i=>!moves[i]); moves[idx]='O'; board[idx].innerHTML=applyThemeSymbol('O');
+      checkWinner(); turn='X'; message.innerHTML=`Next turn: ${applyThemeSymbol(turn)}`; return;
+    }
+  }
+  // Center
+  if(!moves[4]){ moves[4]='O'; board[4].innerHTML=applyThemeSymbol('O'); turn='X'; message.innerHTML=`Next turn: ${applyThemeSymbol(turn)}`; return;}
+  // Corner
+  const corners=[0,2,6,8].filter(i=>!moves[i]);
+  if(corners.length>0){ const idx=corners[Math.floor(Math.random()*corners.length)]; moves[idx]='O'; board[idx].innerHTML=applyThemeSymbol('O'); turn='X'; message.innerHTML=`Next turn: ${applyThemeSymbol(turn)}`; return;}
+  // Side
+  const sides=[1,3,5,7].filter(i=>!moves[i]);
+  if(sides.length>0){ const idx=sides[Math.floor(Math.random()*sides.length)]; moves[idx]='O'; board[idx].innerHTML=applyThemeSymbol('O'); turn='X'; message.innerHTML=`Next turn: ${applyThemeSymbol(turn)}`; return;}
+}
+
+function handleClick(e){
+  const index=e.target.dataset.index;
+  if(!moves[index] && !message.textContent.includes('wins') && !message.textContent.includes('tie')){
+    moves[index]=turn;
+    board[index].innerHTML=applyThemeSymbol(turn);
+    if(!checkWinner()){
+      turn=turn==='X'?'O':'X';
+      if(vsAI && turn==='O'){ message.innerHTML="AI's turn..."; setTimeout(aiMove,400);}
+      else{message.innerHTML=`Next turn: ${applyThemeSymbol(turn)}`;}
+    }
+  }
+}
+
+function resetGame(){
+  moves=Array(9).fill(null);
+  board.forEach(cell=>{cell.innerHTML=''; cell.classList.remove('winner');});
+  turn='X';
+  message.innerHTML=`Next turn: ${applyThemeSymbol(turn)}`;
+}
+
+function toggleMode(){
+  vsAI=!vsAI;
+  toggleModeBtn.textContent=vsAI?'Mode: Human vs AI':'Mode: Human vs Human';
+  resetGame();
+}
+
+function toggleTheme(){
+  if(theme==='normal') theme='christmas';
+  else if(theme==='christmas') theme='colorful';
+  else theme='normal';
+  setTheme();
+}
+
+board.forEach(cell=>cell.addEventListener('click',handleClick));
+resetBtn.addEventListener('click',resetGame);
+toggleModeBtn.addEventListener('click',toggleMode);
+themeBtn.addEventListener('click',toggleTheme);
+
+setTheme();
+</script>
+
+</body>
+</html>

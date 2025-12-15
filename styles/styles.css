@@ -1,0 +1,36 @@
+body {
+  background-image: url('../images/lebron-james-red-nba-cleveland-cavaliers-jersey-23-qm77xsla6484q3wd.jpg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+}
+.yellow-list li {
+  color: yellow;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.subheading {
+  color: yellow;
+  font-size: large;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.header-lebron {
+  color: yellow;
+  font-size: xx-large;
+  text-align: center;
+  font-family: "Times New Roman", Times, serif;
+}
+.back-to-top {
+  color: rgb(177, 44, 10);
+  font-family: "Times New Roman", Times, serif;
+  text-align: center;
+}
+a:link,
+a:visited {
+  color: rgb(177, 44, 10);
+  text-decoration: none;
+}
+
+
